@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D Car Racing Game</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+</head>
+<body>
+    <div id="gameContainer">
+        <div id="ui">
+            <div id="hud">
+                <div id="timer">Time: 00:00</div>
+                <div id="lapCounter">Lap: 1/3</div>
+                <div id="speed">Speed: 0 mph</div>
+            </div>
+            <div id="startScreen" class="screen">
+                <h1>3D Car Racing</h1>
+                <p>Use WASD or Arrow Keys to drive</p>
+                <p>Press SPACE for brake</p>
+                <button id="startButton">Start Race</button>
+            </div>
+            <div id="gameOverScreen" class="screen hidden">
+                <h1>Race Complete!</h1>
+                <div id="finalTime"></div>
+                <button id="restartButton">Race Again</button>
+            </div>
+        </div>
+        <canvas id="gameCanvas"></canvas>
+    </div>
+    
+    <script src="game.js"></script>
+</body>
+</html>
