@@ -3,33 +3,241 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>3D Car Racing Game</title>
+    <title>AAA Racing Championship</title>
     <link rel="stylesheet" href="style.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Exo+2:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r155/three.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cannon.js/4.0.0/cannon.min.js"></script>
 </head>
 <body>
+    <div id="loadingScreen">
+        <div class="loading-content">
+            <h1>AAA RACING CHAMPIONSHIP</h1>
+            <div class="loading-bar">
+                <div class="loading-progress"></div>
+            </div>
+            <p id="loadingText">Loading assets...</p>
+        </div>
+    </div>
+
     <div id="gameContainer">
-        <div id="ui">
-            <div id="hud">
-                <div id="timer">Time: 00:00</div>
-                <div id="lapCounter">Lap: 1/3</div>
-                <div id="speed">Speed: 0 mph</div>
-            </div>
-            <div id="startScreen" class="screen">
-                <h1>3D Car Racing</h1>
-                <p>Use WASD or Arrow Keys to drive</p>
-                <p>Press SPACE for brake</p>
-                <button id="startButton">Start Race</button>
-            </div>
-            <div id="gameOverScreen" class="screen hidden">
-                <h1>Race Complete!</h1>
-                <div id="finalTime"></div>
-                <button id="restartButton">Race Again</button>
+        <!-- Main Menu -->
+        <div id="mainMenu" class="screen">
+            <div class="menu-bg"></div>
+            <div class="menu-content">
+                <h1 class="game-title">AAA RACING</h1>
+                <h2 class="game-subtitle">CHAMPIONSHIP</h2>
+                <div class="menu-buttons">
+                    <button id="quickRaceBtn" class="menu-btn primary">Quick Race</button>
+                    <button id="carSelectBtn" class="menu-btn">Car Selection</button>
+                    <button id="trackSelectBtn" class="menu-btn">Track Selection</button>
+                    <button id="settingsBtn" class="menu-btn">Settings</button>
+                </div>
             </div>
         </div>
+
+        <!-- Car Selection -->
+        <div id="carSelection" class="screen hidden">
+            <div class="selection-header">
+                <h2>Select Your Vehicle</h2>
+                <button id="backFromCarBtn" class="back-btn">← Back</button>
+            </div>
+            <div class="car-showcase">
+                <div class="car-viewport" id="carViewport"></div>
+                <div class="car-controls">
+                    <button id="prevCarBtn" class="nav-btn">‹</button>
+                    <button id="nextCarBtn" class="nav-btn">›</button>
+                </div>
+            </div>
+            <div class="car-info">
+                <h3 id="carName">Sports Coupe</h3>
+                <div class="car-stats">
+                    <div class="stat">
+                        <span>Speed</span>
+                        <div class="stat-bar"><div class="stat-fill" id="speedStat"></div></div>
+                    </div>
+                    <div class="stat">
+                        <span>Acceleration</span>
+                        <div class="stat-bar"><div class="stat-fill" id="accelStat"></div></div>
+                    </div>
+                    <div class="stat">
+                        <span>Handling</span>
+                        <div class="stat-bar"><div class="stat-fill" id="handlingStat"></div></div>
+                    </div>
+                    <div class="stat">
+                        <span>Braking</span>
+                        <div class="stat-bar"><div class="stat-fill" id="brakingStat"></div></div>
+                    </div>
+                </div>
+                <button id="selectCarBtn" class="menu-btn primary">Select Vehicle</button>
+            </div>
+        </div>
+
+        <!-- Track Selection -->
+        <div id="trackSelection" class="screen hidden">
+            <div class="selection-header">
+                <h2>Select Track</h2>
+                <button id="backFromTrackBtn" class="back-btn">← Back</button>
+            </div>
+            <div class="track-grid">
+                <div class="track-card" data-track="nurburgring">
+                    <div class="track-preview"></div>
+                    <h3>Nürburgring GP</h3>
+                    <p>Technical circuit with challenging corners</p>
+                    <span class="difficulty">Difficulty: ★★★★☆</span>
+                </div>
+                <div class="track-card" data-track="monaco">
+                    <div class="track-preview"></div>
+                    <h3>Monaco Street Circuit</h3>
+                    <p>Narrow streets requiring precision</p>
+                    <span class="difficulty">Difficulty: ★★★★★</span>
+                </div>
+                <div class="track-card" data-track="silverstone">
+                    <div class="track-preview"></div>
+                    <h3>Silverstone Circuit</h3>
+                    <p>High-speed flowing layout</p>
+                    <span class="difficulty">Difficulty: ★★★☆☆</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Settings -->
+        <div id="settings" class="screen hidden">
+            <div class="selection-header">
+                <h2>Game Settings</h2>
+                <button id="backFromSettingsBtn" class="back-btn">← Back</button>
+            </div>
+            <div class="settings-content">
+                <div class="setting-group">
+                    <h3>Graphics</h3>
+                    <div class="setting">
+                        <label>Quality:</label>
+                        <select id="qualitySelect">
+                            <option value="high">Ultra</option>
+                            <option value="medium" selected>High</option>
+                            <option value="low">Medium</option>
+                        </select>
+                    </div>
+                    <div class="setting">
+                        <label>Shadows:</label>
+                        <input type="checkbox" id="shadowsCheck" checked>
+                    </div>
+                    <div class="setting">
+                        <label>Particles:</label>
+                        <input type="checkbox" id="particlesCheck" checked>
+                    </div>
+                </div>
+                <div class="setting-group">
+                    <h3>Audio</h3>
+                    <div class="setting">
+                        <label>Master Volume:</label>
+                        <input type="range" id="masterVolume" min="0" max="100" value="80">
+                    </div>
+                    <div class="setting">
+                        <label>Engine Sound:</label>
+                        <input type="range" id="engineVolume" min="0" max="100" value="70">
+                    </div>
+                </div>
+                <div class="setting-group">
+                    <h3>Controls</h3>
+                    <div class="setting">
+                        <label>Steering Sensitivity:</label>
+                        <input type="range" id="steeringSensitivity" min="50" max="150" value="100">
+                    </div>
+                    <div class="setting">
+                        <label>Automatic Transmission:</label>
+                        <input type="checkbox" id="autoTransmission" checked>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Race HUD -->
+        <div id="raceHUD" class="hidden">
+            <div class="hud-top">
+                <div class="position-display">
+                    <span class="position-number" id="position">1</span>
+                    <span class="position-suffix">st</span>
+                </div>
+                <div class="race-info">
+                    <div class="lap-counter">
+                        <span>LAP</span>
+                        <span id="currentLap">1</span>/<span id="totalLaps">3</span>
+                    </div>
+                    <div class="race-time" id="raceTime">00:00.000</div>
+                </div>
+                <div class="mini-map">
+                    <canvas id="miniMapCanvas" width="200" height="150"></canvas>
+                </div>
+            </div>
+            
+            <div class="hud-bottom">
+                <div class="speedometer">
+                    <div class="speed-gauge">
+                        <canvas id="speedGauge" width="180" height="180"></canvas>
+                    </div>
+                    <div class="gear-display" id="gearDisplay">3</div>
+                </div>
+                
+                <div class="performance-bars">
+                    <div class="perf-bar">
+                        <span>THROTTLE</span>
+                        <div class="bar"><div class="fill" id="throttleBar"></div></div>
+                    </div>
+                    <div class="perf-bar">
+                        <span>BRAKE</span>
+                        <div class="bar"><div class="fill" id="brakeBar"></div></div>
+                    </div>
+                    <div class="perf-bar">
+                        <span>TURBO</span>
+                        <div class="bar"><div class="fill turbo" id="turboBar"></div></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="countdown" id="countdown">
+                <span id="countdownNumber">3</span>
+            </div>
+        </div>
+
+        <!-- Results Screen -->
+        <div id="resultsScreen" class="screen hidden">
+            <div class="results-content">
+                <h1>RACE COMPLETE</h1>
+                <div class="final-position">
+                    <span class="position-large" id="finalPosition">1st</span>
+                    <span class="position-label">PLACE</span>
+                </div>
+                <div class="race-stats">
+                    <div class="stat-item">
+                        <span class="stat-label">Best Lap</span>
+                        <span class="stat-value" id="bestLapTime">01:23.456</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Total Time</span>
+                        <span class="stat-value" id="totalTime">04:15.789</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Top Speed</span>
+                        <span class="stat-value" id="topSpeed">287 mph</span>
+                    </div>
+                </div>
+                <div class="results-buttons">
+                    <button id="raceAgainBtn" class="menu-btn primary">Race Again</button>
+                    <button id="mainMenuBtn" class="menu-btn">Main Menu</button>
+                </div>
+            </div>
+        </div>
+
         <canvas id="gameCanvas"></canvas>
     </div>
     
+    <script src="carModels.js"></script>
+    <script src="trackData.js"></script>
+    <script src="audioEngine.js"></script>
+    <script src="particleSystem.js"></script>
+    <script src="physicsEngine.js"></script>
+    <script src="aiRacers.js"></script>
     <script src="game.js"></script>
 </body>
 </html>
