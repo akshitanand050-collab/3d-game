@@ -3,33 +3,256 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>3D Car Racing Game</title>
-    <link rel="stylesheet" href="style.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <title>Open World AAA Game</title>
+    <meta name="description" content="A AAA quality open world game built with Three.js featuring procedural world generation, physics, and advanced graphics.">
+    
+    <!-- Preload critical resources -->
+    <link rel="preload" href="src/main.js" as="script" type="module">
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎮</text></svg>">
+    
+    <!-- Critical CSS for loading -->
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            overflow: hidden;
+            user-select: none;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+        }
+        
+        #gameCanvas {
+            display: block;
+            width: 100vw;
+            height: 100vh;
+            cursor: crosshair;
+        }
+        
+        /* Loading screen styles */
+        #loading-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
+            transition: opacity 0.5s ease-out;
+        }
+        
+        .loading-container {
+            text-align: center;
+            color: white;
+            max-width: 400px;
+            width: 90%;
+        }
+        
+        .loading-container h1 {
+            font-size: 3rem;
+            margin-bottom: 30px;
+            font-weight: 900;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .loading-bar {
+            width: 100%;
+            height: 8px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 4px;
+            overflow: hidden;
+            margin-bottom: 20px;
+        }
+        
+        .loading-progress {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            border-radius: 4px;
+            transition: width 0.3s ease;
+            width: 0%;
+        }
+        
+        .loading-container p {
+            font-size: 1.1rem;
+            opacity: 0.8;
+            margin-top: 10px;
+        }
+        
+        /* Error screen styles */
+        #error-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #2d1b1b 0%, #4a2c2a 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
+        }
+        
+        .error-container {
+            text-align: center;
+            color: white;
+            max-width: 500px;
+            width: 90%;
+            padding: 40px;
+            background: rgba(0,0,0,0.3);
+            border-radius: 10px;
+            border: 2px solid #ff4444;
+        }
+        
+        .error-container h1 {
+            font-size: 2.5rem;
+            margin-bottom: 20px;
+            color: #ff4444;
+        }
+        
+        .error-container p {
+            margin-bottom: 30px;
+            font-size: 1.1rem;
+            line-height: 1.5;
+        }
+        
+        .error-container button {
+            background: linear-gradient(135deg, #ff4444, #cc3333);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 5px;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .error-container button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(255,68,68,0.4);
+        }
+        
+        /* Mobile optimizations */
+        @media (max-width: 768px) {
+            .loading-container h1 {
+                font-size: 2rem;
+            }
+            
+            .error-container h1 {
+                font-size: 2rem;
+            }
+            
+            #gameCanvas {
+                cursor: default;
+            }
+        }
+        
+        /* Hide scrollbars */
+        ::-webkit-scrollbar {
+            display: none;
+        }
+        
+        html {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        
+        /* Disable text selection and dragging */
+        * {
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            -khtml-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+            -webkit-user-drag: none;
+            -khtml-user-drag: none;
+            -moz-user-drag: none;
+            -o-user-drag: none;
+            user-drag: none;
+        }
+        
+        /* Performance hints */
+        #gameCanvas {
+            image-rendering: -webkit-optimize-contrast;
+            image-rendering: crisp-edges;
+            transform: translateZ(0);
+            will-change: transform;
+        }
+    </style>
 </head>
 <body>
-    <div id="gameContainer">
-        <div id="ui">
-            <div id="hud">
-                <div id="timer">Time: 00:00</div>
-                <div id="lapCounter">Lap: 1/3</div>
-                <div id="speed">Speed: 0 mph</div>
-            </div>
-            <div id="startScreen" class="screen">
-                <h1>3D Car Racing</h1>
-                <p>Use WASD or Arrow Keys to drive</p>
-                <p>Press SPACE for brake</p>
-                <button id="startButton">Start Race</button>
-            </div>
-            <div id="gameOverScreen" class="screen hidden">
-                <h1>Race Complete!</h1>
-                <div id="finalTime"></div>
-                <button id="restartButton">Race Again</button>
+    <!-- Game Canvas -->
+    <canvas id="gameCanvas"></canvas>
+    
+    <!-- No JavaScript fallback -->
+    <noscript>
+        <div style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #1a1a1a; color: white; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; text-align: center; padding: 20px;">
+            <div>
+                <h1>🎮 Open World Game</h1>
+                <p>This game requires JavaScript to run.</p>
+                <p>Please enable JavaScript in your browser and refresh the page.</p>
             </div>
         </div>
-        <canvas id="gameCanvas"></canvas>
-    </div>
+    </noscript>
     
-    <script src="game.js"></script>
+    <!-- Game Scripts -->
+    <script type="module" src="src/main.js"></script>
+    
+    <!-- Service Worker for offline support -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js')
+                    .then(registration => {
+                        console.log('SW registered: ', registration);
+                    })
+                    .catch(registrationError => {
+                        console.log('SW registration failed: ', registrationError);
+                    });
+            });
+        }
+    </script>
+    
+    <!-- Performance monitoring -->
+    <script>
+        // Basic performance monitoring
+        window.addEventListener('load', () => {
+            if (window.performance && window.performance.timing) {
+                const timing = window.performance.timing;
+                const loadTime = timing.loadEventEnd - timing.navigationStart;
+                console.log(`🚀 Page load time: ${loadTime}ms`);
+            }
+        });
+        
+        // Memory usage monitoring (for development)
+        if (process.env.NODE_ENV === 'development' && window.performance && window.performance.memory) {
+            setInterval(() => {
+                const memory = window.performance.memory;
+                console.log(`Memory: ${Math.round(memory.usedJSHeapSize / 1048576)}MB / ${Math.round(memory.totalJSHeapSize / 1048576)}MB`);
+            }, 10000);
+        }
+    </script>
+    
+    <!-- Analytics placeholder -->
+    <script>
+        // Analytics would go here in production
+        // Example: Google Analytics, Mixpanel, etc.
+    </script>
 </body>
 </html>
