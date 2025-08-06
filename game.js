@@ -1,67 +1,243 @@
-// Game state and configuration
-class RacingGame {
+// Dream Dealer - A Surreal First-Person Exploration Game
+class DreamDealer {
     constructor() {
         this.scene = null;
         this.camera = null;
         this.renderer = null;
-        this.car = null;
-        this.track = [];
-        this.checkpoints = [];
-        this.gameState = 'menu'; // 'menu', 'playing', 'finished'
-        this.currentLap = 1;
-        this.totalLaps = 3;
-        this.startTime = 0;
-        this.currentTime = 0;
-        this.speed = 0;
-        this.maxSpeed = 0.5;
-        this.acceleration = 0.02;
-        this.friction = 0.98;
-        this.turnSpeed = 0.05;
-        this.currentCheckpoint = 0;
+        this.controls = null;
+        this.raycaster = null;
+        this.mouse = null;
         
-        // Car physics
-        this.carVelocity = new THREE.Vector3();
-        this.carRotation = 0;
+        // Game state
+        this.gameState = 'menu'; // menu, playing, fragmentUI
+        this.dreamFragments = 0;
+        this.currentDreamer = 'Unknown';
+        this.dreamLevel = 1;
+        this.currentFragment = null;
         
-        // Input handling
-        this.keys = {
-            up: false,
-            down: false,
-            left: false,
-            right: false,
-            brake: false
+        // Dream world elements
+        this.dreamObjects = [];
+        this.fragments = [];
+        this.floatingStructures = [];
+        this.ambientParticles = [];
+        
+        // Dreamer data
+        this.dreamers = [
+            { name: 'Sarah', emotion: 'melancholy', fragments: [] },
+            { name: 'Marcus', emotion: 'nostalgia', fragments: [] },
+            { name: 'Elena', emotion: 'wonder', fragments: [] },
+            { name: 'David', emotion: 'fear', fragments: [] },
+            { name: 'Luna', emotion: 'joy', fragments: [] }
+        ];
+        
+        this.fragmentTexts = {
+            melancholy: [
+                "A forgotten melody echoes through empty halls...",
+                "The weight of memories too heavy to carry...",
+                "Shadows dance with the ghosts of what could have been...",
+                "Time flows like honey, slow and golden...",
+                "The heart remembers what the mind tries to forget..."
+            ],
+            nostalgia: [
+                "The scent of old books and summer afternoons...",
+                "Childhood laughter echoing through time...",
+                "A familiar street that no longer exists...",
+                "The warmth of a grandmother's embrace...",
+                "Songs that speak of days long past..."
+            ],
+            wonder: [
+                "Stars falling like diamonds from the sky...",
+                "Mountains that touch the clouds and beyond...",
+                "Oceans of light in impossible colors...",
+                "Cities built on the backs of giant creatures...",
+                "The first breath of a newborn universe..."
+            ],
+            fear: [
+                "Darkness that moves when you're not looking...",
+                "Whispers from behind closed doors...",
+                "Shadows that follow your every step...",
+                "The feeling of being watched in empty rooms...",
+                "Nightmares that refuse to stay in dreams..."
+            ],
+            joy: [
+                "Sunlight that dances on morning dew...",
+                "The pure laughter of children at play...",
+                "Flowers that bloom in impossible colors...",
+                "Music that makes the heart sing...",
+                "The first taste of something wonderful..."
+            ]
         };
         
         this.init();
     }
     
     init() {
-        this.setupScene();
-        this.createCar();
-        this.createTrack();
-        this.createLighting();
+        this.setupThreeJS();
         this.setupControls();
-        this.setupUI();
+        this.setupEventListeners();
+        this.createDreamWorld();
         this.animate();
     }
     
-    setupScene() {
-        // Create scene
+    setupThreeJS() {
+        // Scene
         this.scene = new THREE.Scene();
-        this.scene.background = new THREE.Color(0x87CEEB); // Sky blue
+        this.scene.fog = new THREE.Fog(0x000011, 50, 200);
         
-        // Create camera
+        // Camera
         this.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-        this.camera.position.set(0, 5, 10);
+        this.camera.position.set(0, 2, 5);
         
-        // Create renderer
-        const canvas = document.getElementById('gameCanvas');
-        this.renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true });
+        // Renderer
+        this.renderer = new THREE.WebGLRenderer({ 
+            canvas: document.getElementById('gameCanvas'),
+            antialias: true 
+        });
         this.renderer.setSize(window.innerWidth, window.innerHeight);
+        this.renderer.setClearColor(0x000011);
         this.renderer.shadowMap.enabled = true;
         this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
         
-        // Handle window resize
+        // Lighting
+        this.setupLighting();
+        
+        // Raycaster for interactions
+        this.raycaster = new THREE.Raycaster();
+        this.mouse = new THREE.Vector2();
+    }
+    
+    setupLighting() {
+        // Ambient light
+        const ambientLight = new THREE.AmbientLight(0x404040, 0.3);
+        this.scene.add(ambientLight);
+        
+        // Main directional light
+        const directionalLight = new THREE.DirectionalLight(0x8a2be2, 0.8);
+        directionalLight.position.set(10, 10, 5);
+        directionalLight.castShadow = true;
+        directionalLight.shadow.mapSize.width = 2048;
+        directionalLight.shadow.mapSize.height = 2048;
+        this.scene.add(directionalLight);
+        
+        // Colored point lights for dream atmosphere
+        const colors = [0xff69b4, 0x00ffff, 0xffff00, 0xff4500];
+        colors.forEach((color, index) => {
+            const pointLight = new THREE.PointLight(color, 0.5, 50);
+            pointLight.position.set(
+                Math.sin(index * Math.PI / 2) * 20,
+                5 + Math.sin(index * Math.PI / 2) * 3,
+                Math.cos(index * Math.PI / 2) * 20
+            );
+            this.scene.add(pointLight);
+        });
+    }
+    
+    setupControls() {
+        this.controls = {
+            moveForward: false,
+            moveBackward: false,
+            moveLeft: false,
+            moveRight: false,
+            velocity: new THREE.Vector3(),
+            direction: new THREE.Vector3(),
+            speed: 0.1
+        };
+        
+        // Mouse controls
+        document.addEventListener('mousemove', (event) => {
+            if (this.gameState === 'playing') {
+                const movementX = event.movementX || 0;
+                const movementY = event.movementY || 0;
+                
+                this.camera.rotation.y -= movementX * 0.002;
+                this.camera.rotation.x -= movementY * 0.002;
+                
+                // Clamp vertical rotation
+                this.camera.rotation.x = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, this.camera.rotation.x));
+            }
+        });
+        
+        // Keyboard controls
+        document.addEventListener('keydown', (event) => {
+            if (this.gameState === 'playing') {
+                switch(event.code) {
+                    case 'KeyW':
+                    case 'ArrowUp':
+                        this.controls.moveForward = true;
+                        break;
+                    case 'KeyS':
+                    case 'ArrowDown':
+                        this.controls.moveBackward = true;
+                        break;
+                    case 'KeyA':
+                    case 'ArrowLeft':
+                        this.controls.moveLeft = true;
+                        break;
+                    case 'KeyD':
+                    case 'ArrowRight':
+                        this.controls.moveRight = true;
+                        break;
+                }
+            }
+        });
+        
+        document.addEventListener('keyup', (event) => {
+            switch(event.code) {
+                case 'KeyW':
+                case 'ArrowUp':
+                    this.controls.moveForward = false;
+                    break;
+                case 'KeyS':
+                case 'ArrowDown':
+                    this.controls.moveBackward = false;
+                    break;
+                case 'KeyA':
+                case 'ArrowLeft':
+                    this.controls.moveLeft = false;
+                    break;
+                case 'KeyD':
+                case 'ArrowRight':
+                    this.controls.moveRight = false;
+                    break;
+            }
+        });
+    }
+    
+    setupEventListeners() {
+        // Start button
+        document.getElementById('startButton').addEventListener('click', () => {
+            this.startGame();
+        });
+        
+        // Restart button
+        document.getElementById('restartButton').addEventListener('click', () => {
+            this.restartGame();
+        });
+        
+        // Fragment UI buttons
+        document.getElementById('collectFragment').addEventListener('click', () => {
+            this.collectFragment();
+        });
+        
+        document.getElementById('closeFragment').addEventListener('click', () => {
+            this.closeFragmentUI();
+        });
+        
+        // Mouse click for interactions
+        document.addEventListener('click', (event) => {
+            if (this.gameState === 'playing') {
+                this.handleClick(event);
+            }
+        });
+        
+        // Pointer lock for mouse controls
+        document.getElementById('gameCanvas').addEventListener('click', () => {
+            if (this.gameState === 'playing') {
+                document.getElementById('gameCanvas').requestPointerLock();
+            }
+        });
+        
+        // Window resize
         window.addEventListener('resize', () => {
             this.camera.aspect = window.innerWidth / window.innerHeight;
             this.camera.updateProjectionMatrix();
@@ -69,413 +245,321 @@ class RacingGame {
         });
     }
     
-    createCar() {
-        const carGroup = new THREE.Group();
-        
-        // Car body
-        const bodyGeometry = new THREE.BoxGeometry(2, 0.5, 4);
-        const bodyMaterial = new THREE.MeshPhongMaterial({ color: 0xFF0000 });
-        const carBody = new THREE.Mesh(bodyGeometry, bodyMaterial);
-        carBody.position.y = 0.5;
-        carBody.castShadow = true;
-        carGroup.add(carBody);
-        
-        // Car roof
-        const roofGeometry = new THREE.BoxGeometry(1.5, 0.8, 2);
-        const roofMaterial = new THREE.MeshPhongMaterial({ color: 0x990000 });
-        const carRoof = new THREE.Mesh(roofGeometry, roofMaterial);
-        carRoof.position.set(0, 1.1, -0.2);
-        carRoof.castShadow = true;
-        carGroup.add(carRoof);
-        
-        // Wheels
-        const wheelGeometry = new THREE.CylinderGeometry(0.3, 0.3, 0.2, 12);
-        const wheelMaterial = new THREE.MeshPhongMaterial({ color: 0x333333 });
-        
-        const wheelPositions = [
-            [-0.9, 0.3, 1.2],   // Front left
-            [0.9, 0.3, 1.2],    // Front right
-            [-0.9, 0.3, -1.2],  // Rear left
-            [0.9, 0.3, -1.2]    // Rear right
-        ];
-        
-        wheelPositions.forEach(pos => {
-            const wheel = new THREE.Mesh(wheelGeometry, wheelMaterial);
-            wheel.position.set(pos[0], pos[1], pos[2]);
-            wheel.rotation.z = Math.PI / 2;
-            wheel.castShadow = true;
-            carGroup.add(wheel);
+    createDreamWorld() {
+        // Ground plane
+        const groundGeometry = new THREE.PlaneGeometry(100, 100);
+        const groundMaterial = new THREE.MeshLambertMaterial({ 
+            color: 0x1a1a2e,
+            transparent: true,
+            opacity: 0.8
         });
-        
-        // Headlights
-        const headlightGeometry = new THREE.SphereGeometry(0.1, 8, 8);
-        const headlightMaterial = new THREE.MeshBasicMaterial({ color: 0xFFFFFF });
-        
-        const leftHeadlight = new THREE.Mesh(headlightGeometry, headlightMaterial);
-        leftHeadlight.position.set(-0.6, 0.7, 2.1);
-        carGroup.add(leftHeadlight);
-        
-        const rightHeadlight = new THREE.Mesh(headlightGeometry, headlightMaterial);
-        rightHeadlight.position.set(0.6, 0.7, 2.1);
-        carGroup.add(rightHeadlight);
-        
-        this.car = carGroup;
-        this.car.position.set(0, 0, 0);
-        this.scene.add(this.car);
-    }
-    
-    createTrack() {
-        // Create ground
-        const groundGeometry = new THREE.PlaneGeometry(200, 200);
-        const groundMaterial = new THREE.MeshPhongMaterial({ color: 0x228B22 });
         const ground = new THREE.Mesh(groundGeometry, groundMaterial);
         ground.rotation.x = -Math.PI / 2;
         ground.receiveShadow = true;
         this.scene.add(ground);
         
-        // Create oval track
-        const trackWidth = 8;
-        const trackGeometry = new THREE.RingGeometry(15, 15 + trackWidth, 32);
-        const trackMaterial = new THREE.MeshPhongMaterial({ color: 0x444444 });
-        const track = new THREE.Mesh(trackGeometry, trackMaterial);
-        track.rotation.x = -Math.PI / 2;
-        track.position.y = 0.01;
-        track.receiveShadow = true;
-        this.scene.add(track);
+        // Create floating structures
+        this.createFloatingStructures();
         
-        // Create track boundaries
-        this.createTrackBoundaries();
-        this.createCheckpoints();
+        // Create dream fragments
+        this.createDreamFragments();
         
-        // Add some decorative elements
-        this.createDecorations();
+        // Create ambient particles
+        this.createAmbientParticles();
     }
     
-    createTrackBoundaries() {
-        const barrierGeometry = new THREE.BoxGeometry(1, 1, 1);
-        const barrierMaterial = new THREE.MeshPhongMaterial({ color: 0xFF4444 });
+    createFloatingStructures() {
+        const structureCount = 15;
         
-        // Inner barriers
-        for (let i = 0; i < 32; i++) {
-            const angle = (i / 32) * Math.PI * 2;
-            const x = Math.cos(angle) * 15;
-            const z = Math.sin(angle) * 15;
-            
-            const barrier = new THREE.Mesh(barrierGeometry, barrierMaterial);
-            barrier.position.set(x, 0.5, z);
-            barrier.castShadow = true;
-            this.scene.add(barrier);
-        }
-        
-        // Outer barriers
-        for (let i = 0; i < 48; i++) {
-            const angle = (i / 48) * Math.PI * 2;
-            const x = Math.cos(angle) * 23;
-            const z = Math.sin(angle) * 23;
-            
-            const barrier = new THREE.Mesh(barrierGeometry, barrierMaterial);
-            barrier.position.set(x, 0.5, z);
-            barrier.castShadow = true;
-            this.scene.add(barrier);
-        }
-    }
-    
-    createCheckpoints() {
-        const checkpointGeometry = new THREE.BoxGeometry(0.5, 3, 0.1);
-        const checkpointMaterial = new THREE.MeshBasicMaterial({ 
-            color: 0x00FF00, 
-            transparent: true, 
-            opacity: 0.7 
-        });
-        
-        // Create 4 checkpoints around the track
-        for (let i = 0; i < 4; i++) {
-            const angle = (i / 4) * Math.PI * 2;
-            const x = Math.cos(angle) * 19;
-            const z = Math.sin(angle) * 19;
-            
-            const checkpoint = new THREE.Mesh(checkpointGeometry, checkpointMaterial);
-            checkpoint.position.set(x, 1.5, z);
-            checkpoint.rotation.y = angle;
-            this.checkpoints.push({
-                mesh: checkpoint,
-                position: new THREE.Vector3(x, 0, z),
-                passed: false
-            });
-            this.scene.add(checkpoint);
-        }
-    }
-    
-    createDecorations() {
-        // Add some trees
-        const treeGeometry = new THREE.ConeGeometry(1, 3, 8);
-        const treeMaterial = new THREE.MeshPhongMaterial({ color: 0x0F5132 });
-        
-        for (let i = 0; i < 20; i++) {
-            const tree = new THREE.Mesh(treeGeometry, treeMaterial);
-            const angle = Math.random() * Math.PI * 2;
-            const distance = 30 + Math.random() * 20;
-            tree.position.set(
-                Math.cos(angle) * distance,
-                1.5,
-                Math.sin(angle) * distance
+        for (let i = 0; i < structureCount; i++) {
+            const structure = this.createRandomStructure();
+            structure.position.set(
+                (Math.random() - 0.5) * 80,
+                Math.random() * 20 + 5,
+                (Math.random() - 0.5) * 80
             );
-            tree.castShadow = true;
-            this.scene.add(tree);
-        }
-        
-        // Add clouds
-        const cloudGeometry = new THREE.SphereGeometry(2, 8, 6);
-        const cloudMaterial = new THREE.MeshBasicMaterial({ 
-            color: 0xFFFFFF, 
-            transparent: true, 
-            opacity: 0.8 
-        });
-        
-        for (let i = 0; i < 10; i++) {
-            const cloud = new THREE.Mesh(cloudGeometry, cloudMaterial);
-            cloud.position.set(
-                Math.random() * 100 - 50,
-                20 + Math.random() * 10,
-                Math.random() * 100 - 50
+            structure.rotation.set(
+                Math.random() * Math.PI,
+                Math.random() * Math.PI,
+                Math.random() * Math.PI
             );
-            cloud.scale.setScalar(0.5 + Math.random() * 0.5);
-            this.scene.add(cloud);
+            this.scene.add(structure);
+            this.floatingStructures.push(structure);
         }
     }
     
-    createLighting() {
-        // Ambient light
-        const ambientLight = new THREE.AmbientLight(0x404040, 0.6);
-        this.scene.add(ambientLight);
+    createRandomStructure() {
+        const group = new THREE.Group();
         
-        // Directional light (sun)
-        const directionalLight = new THREE.DirectionalLight(0xFFFFFF, 0.8);
-        directionalLight.position.set(50, 50, 50);
-        directionalLight.castShadow = true;
-        directionalLight.shadow.mapSize.width = 2048;
-        directionalLight.shadow.mapSize.height = 2048;
-        directionalLight.shadow.camera.near = 0.5;
-        directionalLight.shadow.camera.far = 200;
-        directionalLight.shadow.camera.left = -50;
-        directionalLight.shadow.camera.right = 50;
-        directionalLight.shadow.camera.top = 50;
-        directionalLight.shadow.camera.bottom = -50;
-        this.scene.add(directionalLight);
+        // Random geometry type
+        const geometries = [
+            new THREE.BoxGeometry(2, 4, 2),
+            new THREE.CylinderGeometry(1, 1, 6),
+            new THREE.SphereGeometry(2),
+            new THREE.TorusGeometry(2, 0.5, 8, 16),
+            new THREE.OctahedronGeometry(2)
+        ];
+        
+        const geometry = geometries[Math.floor(Math.random() * geometries.length)];
+        const material = new THREE.MeshLambertMaterial({
+            color: new THREE.Color().setHSL(Math.random(), 0.7, 0.5),
+            transparent: true,
+            opacity: 0.8
+        });
+        
+        const mesh = new THREE.Mesh(geometry, material);
+        mesh.castShadow = true;
+        group.add(mesh);
+        
+        return group;
     }
     
-    setupControls() {
-        document.addEventListener('keydown', (event) => {
-            switch(event.code) {
-                case 'ArrowUp':
-                case 'KeyW':
-                    this.keys.up = true;
-                    break;
-                case 'ArrowDown':
-                case 'KeyS':
-                    this.keys.down = true;
-                    break;
-                case 'ArrowLeft':
-                case 'KeyA':
-                    this.keys.left = true;
-                    break;
-                case 'ArrowRight':
-                case 'KeyD':
-                    this.keys.right = true;
-                    break;
-                case 'Space':
-                    this.keys.brake = true;
-                    event.preventDefault();
-                    break;
-            }
-        });
+    createDreamFragments() {
+        const fragmentCount = 8;
         
-        document.addEventListener('keyup', (event) => {
-            switch(event.code) {
-                case 'ArrowUp':
-                case 'KeyW':
-                    this.keys.up = false;
-                    break;
-                case 'ArrowDown':
-                case 'KeyS':
-                    this.keys.down = false;
-                    break;
-                case 'ArrowLeft':
-                case 'KeyA':
-                    this.keys.left = false;
-                    break;
-                case 'ArrowRight':
-                case 'KeyD':
-                    this.keys.right = false;
-                    break;
-                case 'Space':
-                    this.keys.brake = false;
-                    break;
-            }
-        });
+        for (let i = 0; i < fragmentCount; i++) {
+            const fragment = this.createDreamFragment();
+            fragment.position.set(
+                (Math.random() - 0.5) * 60,
+                Math.random() * 10 + 2,
+                (Math.random() - 0.5) * 60
+            );
+            this.scene.add(fragment);
+            this.fragments.push(fragment);
+        }
     }
     
-    setupUI() {
-        const startButton = document.getElementById('startButton');
-        const restartButton = document.getElementById('restartButton');
+    createDreamFragment() {
+        const group = new THREE.Group();
         
-        startButton.addEventListener('click', () => {
-            this.startRace();
+        // Crystal-like geometry
+        const geometry = new THREE.OctahedronGeometry(1);
+        const material = new THREE.MeshLambertMaterial({
+            color: 0x8a2be2,
+            transparent: true,
+            opacity: 0.9,
+            emissive: 0x8a2be2,
+            emissiveIntensity: 0.3
         });
         
-        restartButton.addEventListener('click', () => {
-            this.resetGame();
+        const mesh = new THREE.Mesh(geometry, material);
+        mesh.castShadow = true;
+        
+        // Add glow effect
+        const glowGeometry = new THREE.OctahedronGeometry(1.5);
+        const glowMaterial = new THREE.MeshBasicMaterial({
+            color: 0x8a2be2,
+            transparent: true,
+            opacity: 0.2
         });
+        const glow = new THREE.Mesh(glowGeometry, glowMaterial);
+        
+        group.add(mesh);
+        group.add(glow);
+        
+        // Store fragment data
+        group.userData = {
+            type: 'fragment',
+            collected: false,
+            emotion: Object.keys(this.fragmentTexts)[Math.floor(Math.random() * Object.keys(this.fragmentTexts).length)],
+            text: this.getRandomFragmentText()
+        };
+        
+        return group;
     }
     
-    startRace() {
+    getRandomFragmentText() {
+        const emotions = Object.keys(this.fragmentTexts);
+        const emotion = emotions[Math.floor(Math.random() * emotions.length)];
+        const texts = this.fragmentTexts[emotion];
+        return texts[Math.floor(Math.random() * texts.length)];
+    }
+    
+    createAmbientParticles() {
+        const particleCount = 100;
+        const geometry = new THREE.BufferGeometry();
+        const positions = new Float32Array(particleCount * 3);
+        
+        for (let i = 0; i < particleCount * 3; i += 3) {
+            positions[i] = (Math.random() - 0.5) * 100;
+            positions[i + 1] = Math.random() * 50;
+            positions[i + 2] = (Math.random() - 0.5) * 100;
+        }
+        
+        geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+        
+        const material = new THREE.PointsMaterial({
+            color: 0x8a2be2,
+            size: 0.5,
+            transparent: true,
+            opacity: 0.6
+        });
+        
+        const particles = new THREE.Points(geometry, material);
+        this.scene.add(particles);
+        this.ambientParticles.push(particles);
+    }
+    
+    startGame() {
         this.gameState = 'playing';
-        this.startTime = Date.now();
         document.getElementById('startScreen').classList.add('hidden');
-        
-        // Reset car position and checkpoints
-        this.car.position.set(19, 0, 0);
-        this.car.rotation.y = -Math.PI / 2;
-        this.carRotation = -Math.PI / 2;
-        this.carVelocity.set(0, 0, 0);
-        this.currentCheckpoint = 0;
-        this.currentLap = 1;
-        
-        // Reset checkpoints
-        this.checkpoints.forEach(cp => cp.passed = false);
-    }
-    
-    resetGame() {
-        this.gameState = 'menu';
-        document.getElementById('gameOverScreen').classList.add('hidden');
-        document.getElementById('startScreen').classList.remove('hidden');
-        this.currentTime = 0;
-        this.speed = 0;
+        document.getElementById('gameCanvas').requestPointerLock();
         this.updateHUD();
     }
     
-    updateCarPhysics() {
-        if (this.gameState !== 'playing') return;
+    restartGame() {
+        this.dreamFragments = 0;
+        this.dreamLevel = 1;
+        this.currentDreamer = this.dreamers[Math.floor(Math.random() * this.dreamers.length)].name;
         
-        // Handle input
-        if (this.keys.up) {
-            this.speed = Math.min(this.speed + this.acceleration, this.maxSpeed);
-        } else if (this.keys.down) {
-            this.speed = Math.max(this.speed - this.acceleration, -this.maxSpeed * 0.5);
-        } else {
-            this.speed *= this.friction;
-        }
+        // Reset fragments
+        this.fragments.forEach(fragment => {
+            fragment.userData.collected = false;
+            fragment.visible = true;
+        });
         
-        if (this.keys.brake) {
-            this.speed *= 0.9;
-        }
+        // Clear scene and recreate
+        this.scene.clear();
+        this.setupLighting();
+        this.createDreamWorld();
         
-        // Handle turning (only when moving)
-        if (Math.abs(this.speed) > 0.01) {
-            if (this.keys.left) {
-                this.carRotation += this.turnSpeed * Math.abs(this.speed) / this.maxSpeed;
-            }
-            if (this.keys.right) {
-                this.carRotation -= this.turnSpeed * Math.abs(this.speed) / this.maxSpeed;
-            }
-        }
-        
-        // Update velocity based on rotation
-        this.carVelocity.x = Math.cos(this.carRotation) * this.speed;
-        this.carVelocity.z = Math.sin(this.carRotation) * this.speed;
-        
-        // Update car position
-        this.car.position.add(this.carVelocity);
-        this.car.rotation.y = this.carRotation;
-        
-        // Simple collision detection with track boundaries
-        const distanceFromCenter = this.car.position.distanceTo(new THREE.Vector3(0, 0, 0));
-        if (distanceFromCenter > 22 || distanceFromCenter < 16) {
-            // Bounce back
-            this.car.position.sub(this.carVelocity);
-            this.speed *= -0.3;
-        }
+        this.gameState = 'playing';
+        document.getElementById('gameOverScreen').classList.add('hidden');
+        document.getElementById('startScreen').classList.add('hidden');
+        this.updateHUD();
     }
     
-    checkCheckpoints() {
-        if (this.gameState !== 'playing') return;
+    handleClick(event) {
+        // Calculate mouse position in normalized device coordinates
+        this.mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+        this.mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
         
-        const carPosition = this.car.position.clone();
-        carPosition.y = 0;
+        // Update the picking ray with the camera and mouse position
+        this.raycaster.setFromCamera(this.mouse, this.camera);
         
-        const currentCP = this.checkpoints[this.currentCheckpoint];
-        const distance = carPosition.distanceTo(currentCP.position);
+        // Calculate objects intersecting the picking ray
+        const intersects = this.raycaster.intersectObjects(this.fragments, true);
         
-        if (distance < 3 && !currentCP.passed) {
-            currentCP.passed = true;
-            currentCP.mesh.material.color.setHex(0x0000FF); // Turn blue when passed
-            
-            this.currentCheckpoint++;
-            
-            // Check if lap completed
-            if (this.currentCheckpoint >= this.checkpoints.length) {
-                this.currentCheckpoint = 0;
-                this.currentLap++;
-                
-                // Reset checkpoint colors and states
-                this.checkpoints.forEach(cp => {
-                    cp.passed = false;
-                    cp.mesh.material.color.setHex(0x00FF00);
-                });
-                
-                // Check if race finished
-                if (this.currentLap > this.totalLaps) {
-                    this.finishRace();
-                }
+        if (intersects.length > 0) {
+            const fragment = intersects[0].object.parent;
+            if (fragment && fragment.userData.type === 'fragment' && !fragment.userData.collected) {
+                this.showFragmentUI(fragment);
             }
         }
     }
     
-    finishRace() {
-        this.gameState = 'finished';
-        const finalTime = this.formatTime(this.currentTime);
-        document.getElementById('finalTime').textContent = `Your time: ${finalTime}`;
+    showFragmentUI(fragment) {
+        this.currentFragment = fragment;
+        this.gameState = 'fragmentUI';
+        
+        document.getElementById('fragmentText').textContent = fragment.userData.text;
+        document.getElementById('dreamFragmentUI').classList.remove('hidden');
+    }
+    
+    collectFragment() {
+        if (this.currentFragment) {
+            this.currentFragment.userData.collected = true;
+            this.currentFragment.visible = false;
+            this.dreamFragments++;
+            
+            // Check if all fragments collected
+            const collectedCount = this.fragments.filter(f => f.userData.collected).length;
+            if (collectedCount >= this.fragments.length) {
+                this.completeDreamLevel();
+            }
+            
+            this.closeFragmentUI();
+            this.updateHUD();
+        }
+    }
+    
+    closeFragmentUI() {
+        document.getElementById('dreamFragmentUI').classList.add('hidden');
+        this.gameState = 'playing';
+        this.currentFragment = null;
+    }
+    
+    completeDreamLevel() {
+        this.dreamLevel++;
+        this.gameState = 'menu';
+        
+        document.getElementById('finalStats').innerHTML = `
+            <p>Dream Level ${this.dreamLevel - 1} Complete!</p>
+            <p>Fragments Collected: ${this.dreamFragments}</p>
+            <p>Next Dreamer: ${this.dreamers[Math.floor(Math.random() * this.dreamers.length)].name}</p>
+        `;
+        
         document.getElementById('gameOverScreen').classList.remove('hidden');
     }
     
-    updateCamera() {
-        if (!this.car) return;
-        
-        // Third-person camera following the car
-        const cameraOffset = new THREE.Vector3(0, 5, 8);
-        cameraOffset.applyAxisAngle(new THREE.Vector3(0, 1, 0), this.carRotation);
-        
-        const desiredCameraPosition = this.car.position.clone().add(cameraOffset);
-        
-        // Smooth camera movement
-        this.camera.position.lerp(desiredCameraPosition, 0.1);
-        this.camera.lookAt(this.car.position);
+    updateHUD() {
+        document.getElementById('dreamFragments').textContent = `Fragments: ${this.dreamFragments}`;
+        document.getElementById('currentDreamer').textContent = `Dreamer: ${this.currentDreamer}`;
+        document.getElementById('dreamLevel').textContent = `Dream Level: ${this.dreamLevel}`;
     }
     
-    updateHUD() {
-        if (this.gameState === 'playing') {
-            this.currentTime = (Date.now() - this.startTime) / 1000;
+    updateMovement() {
+        if (this.gameState !== 'playing') return;
+        
+        const time = Date.now() * 0.001;
+        
+        // Movement
+        this.controls.velocity.x -= this.controls.velocity.x * 10.0 * 0.016;
+        this.controls.velocity.z -= this.controls.velocity.z * 10.0 * 0.016;
+        
+        this.controls.direction.z = Number(this.controls.moveForward) - Number(this.controls.moveBackward);
+        this.controls.direction.x = Number(this.controls.moveRight) - Number(this.controls.moveLeft);
+        this.controls.direction.normalize();
+        
+        if (this.controls.moveForward || this.controls.moveBackward) {
+            this.controls.velocity.z -= this.controls.direction.z * 400.0 * 0.016;
+        }
+        if (this.controls.moveLeft || this.controls.moveRight) {
+            this.controls.velocity.x -= this.controls.direction.x * 400.0 * 0.016;
         }
         
-        document.getElementById('timer').textContent = `Time: ${this.formatTime(this.currentTime)}`;
-        document.getElementById('lapCounter').textContent = `Lap: ${Math.min(this.currentLap, this.totalLaps)}/${this.totalLaps}`;
-        document.getElementById('speed').textContent = `Speed: ${Math.round(Math.abs(this.speed) * 200)} mph`;
+        // Apply movement
+        const moveX = this.controls.velocity.x * 0.016;
+        const moveZ = this.controls.velocity.z * 0.016;
+        
+        this.camera.translateZ(-moveZ);
+        this.camera.translateX(-moveX);
+        
+        // Keep camera within bounds
+        this.camera.position.x = Math.max(-50, Math.min(50, this.camera.position.x));
+        this.camera.position.z = Math.max(-50, Math.min(50, this.camera.position.z));
+        this.camera.position.y = Math.max(1, Math.min(20, this.camera.position.y));
     }
     
-    formatTime(seconds) {
-        const minutes = Math.floor(seconds / 60);
-        const secs = Math.floor(seconds % 60);
-        const ms = Math.floor((seconds % 1) * 100);
-        return `${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}.${ms.toString().padStart(2, '0')}`;
+    updateDreamWorld() {
+        const time = Date.now() * 0.001;
+        
+        // Animate floating structures
+        this.floatingStructures.forEach((structure, index) => {
+            structure.rotation.y += 0.005 * (index % 3 + 1);
+            structure.position.y += Math.sin(time + index) * 0.01;
+        });
+        
+        // Animate fragments
+        this.fragments.forEach((fragment, index) => {
+            if (!fragment.userData.collected) {
+                fragment.rotation.y += 0.02;
+                fragment.position.y += Math.sin(time * 2 + index) * 0.005;
+            }
+        });
+        
+        // Animate ambient particles
+        this.ambientParticles.forEach((particles, index) => {
+            particles.rotation.y += 0.001 * (index + 1);
+            particles.position.y += Math.sin(time * 0.5 + index) * 0.01;
+        });
     }
     
     animate() {
         requestAnimationFrame(() => this.animate());
         
-        this.updateCarPhysics();
-        this.checkCheckpoints();
-        this.updateCamera();
-        this.updateHUD();
+        this.updateMovement();
+        this.updateDreamWorld();
         
         this.renderer.render(this.scene, this.camera);
     }
@@ -483,5 +567,5 @@ class RacingGame {
 
 // Initialize the game when the page loads
 window.addEventListener('load', () => {
-    new RacingGame();
+    new DreamDealer();
 });

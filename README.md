@@ -1,49 +1,54 @@
-# 3D Car Racing Game
+# Dream Dealer
 
-A fun and engaging 3D car racing game built with Three.js and vanilla JavaScript. Race around an oval track, navigate through checkpoints, and try to complete 3 laps in the fastest time possible!
+A surreal first-person exploration game where you play as a mysterious entity who enters people's dreams to extract fragments of their memories, emotions, and fantasies. Each dream world is procedurally generated with bizarre, symbolic architecture — floating cities, shifting gravity, and impossible landscapes.
+
+## About the Game
+
+In "Dream Dealer", you navigate through ethereal dream realms, each representing the subconscious of different dreamers. As you explore these surreal environments, you'll encounter glowing dream fragments that contain pieces of the dreamer's memories and emotions. Collect these fragments to unlock secrets about the dreamers, humanity, and your own identity.
 
 ## Features
 
-- **3D Graphics**: Built with Three.js for smooth 3D rendering
-- **Realistic Car Model**: Detailed car with body, roof, wheels, and headlights
-- **Physics-Based Movement**: Realistic acceleration, friction, and turning mechanics
-- **Oval Race Track**: Complete with barriers, checkpoints, and decorative elements
-- **Third-Person Camera**: Dynamic camera that follows the car smoothly
-- **Lap System**: Complete 3 laps while going through all checkpoints in order
-- **Timer & HUD**: Real-time speed, lap counter, and race timer
-- **Collision Detection**: Bounce off track boundaries to stay on course
-- **Responsive Design**: Works on both desktop and mobile devices
+- **Surreal Dream Worlds**: Procedurally generated environments with floating structures, impossible geometry, and dreamlike atmospheres
+- **First-Person Exploration**: Immersive navigation through 3D dream spaces with mouse look and WASD movement
+- **Dream Fragment Collection**: Interactive crystal-like fragments containing emotional memories
+- **Multiple Dreamers**: Each dream level represents a different person's subconscious
+- **Emotional Narratives**: Five different emotional themes (melancholy, nostalgia, wonder, fear, joy) with unique fragment texts
+- **Atmospheric Visuals**: Ethereal lighting, ambient particles, and dreamlike color schemes
+- **Progressive Story**: Unlock new dream levels as you collect fragments and discover the nature of your existence
 
 ## How to Play
 
 ### Controls
-- **W** or **↑** - Accelerate forward
-- **S** or **↓** - Reverse/brake
-- **A** or **←** - Turn left
-- **D** or **→** - Turn right
-- **Space** - Emergency brake
+- **WASD** or **Arrow Keys** - Move around the dream world
+- **Mouse** - Look around and explore
+- **Click** - Interact with dream fragments
+- **ESC** - Exit pointer lock (if needed)
 
 ### Objective
-1. Click "Start Race" to begin
-2. Drive through all green checkpoints in order (they turn blue when passed)
-3. Complete 3 laps around the oval track
-4. Try to achieve the fastest time possible!
+1. Click "Enter Dreams" to begin your journey
+2. Explore the surreal dream landscape
+3. Look for glowing purple crystal fragments floating in the air
+4. Click on fragments to read the dream memories they contain
+5. Collect all fragments to complete the dream level
+6. Progress through multiple dreamers and their unique emotional landscapes
 
-## Game Elements
+## Dream Themes
 
-- **Red Car**: Your racing vehicle with realistic physics
-- **Gray Track**: The oval racing circuit
-- **Green/Blue Checkpoints**: Navigate through these in sequence
-- **Red Barriers**: Track boundaries - avoid hitting them!
-- **Trees & Clouds**: Environmental decorations
-- **HUD**: Displays current time, lap number, and speed
+Each dream level features different emotional themes:
+
+- **Melancholy**: Memories tinged with sadness and reflection
+- **Nostalgia**: Warm recollections of times past
+- **Wonder**: Awe-inspiring and magical experiences
+- **Fear**: Dark and unsettling subconscious fears
+- **Joy**: Bright and uplifting emotional moments
 
 ## Technical Details
 
 - **Engine**: Three.js (WebGL)
-- **Physics**: Custom implementation with velocity, acceleration, and collision detection
-- **Graphics**: Real-time 3D rendering with shadows and lighting
-- **Performance**: Optimized for smooth 60 FPS gameplay
+- **Graphics**: Real-time 3D rendering with atmospheric lighting and particle effects
+- **Physics**: Custom movement system with collision detection
+- **Audio**: Ambient dreamlike atmosphere (visual only)
+- **Performance**: Optimized for smooth exploration gameplay
 
 ## Getting Started
 
@@ -60,9 +65,33 @@ Requires a browser with WebGL support for 3D graphics.
 
 ## File Structure
 
-- `index.html` - Main HTML file with game canvas and UI
-- `style.css` - Stylesheet for UI and responsive design
-- `game.js` - Complete game logic, 3D scene setup, and physics
+- `index.html` - Main HTML file with game canvas and dream-themed UI
+- `style.css` - Ethereal stylesheet with dreamlike aesthetics and animations
+- `game.js` - Complete game logic, 3D scene setup, and dream world generation
 - `README.md` - This documentation file
 
-Enjoy racing! 🏎️💨 
+## Game Mechanics
+
+### Dream Fragment System
+- Each fragment contains a unique piece of emotional memory
+- Fragments are represented by glowing purple crystals
+- Click to read the memory text and choose to collect or leave the fragment
+- Collecting fragments progresses the dream level
+
+### Dream World Generation
+- Procedurally generated floating structures with random geometries
+- Ambient particle systems creating dreamlike atmosphere
+- Dynamic lighting with multiple colored point lights
+- Fog effects for depth and mystery
+
+### Narrative Progression
+- Each dream level represents a different dreamer
+- Emotional themes change between levels
+- Fragment texts reveal aspects of the dreamer's psyche
+- Progressive difficulty and complexity in dream environments
+
+## Immersive Experience
+
+"Dream Dealer" creates an immersive, meditative experience that blends exploration, narrative discovery, and emotional storytelling. The game's surreal aesthetics and atmospheric design encourage players to slow down, explore, and reflect on the nature of dreams, memory, and human consciousness.
+
+Enter the realm of dreams and discover what lies within the subconscious... 🌙✨ 
