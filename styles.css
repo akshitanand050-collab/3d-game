@@ -1,0 +1,769 @@
+/* Dream Dealer - Main Stylesheet */
+
+:root {
+    --primary-color: #2a1810;
+    --secondary-color: #4a3c28;
+    --accent-color: #d4af37;
+    --dream-purple: #6a4c93;
+    --dream-blue: #2e86de;
+    --dream-pink: #ee5a6f;
+    --text-light: #f5f3f0;
+    --text-dark: #2c2416;
+    --glass-bg: rgba(255, 255, 255, 0.1);
+    --glass-border: rgba(255, 255, 255, 0.2);
+    --shadow-color: rgba(0, 0, 0, 0.3);
+    
+    --font-title: 'Cinzel', serif;
+    --font-body: 'Fira Code', monospace;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: var(--font-body);
+    background: linear-gradient(45deg, var(--primary-color), var(--secondary-color));
+    color: var(--text-light);
+    overflow: hidden;
+    user-select: none;
+}
+
+/* Utility Classes */
+.hidden { display: none !important; }
+.screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 1000; }
+.screen:not(.active) { display: none; }
+
+/* Loading Screen */
+#loading-screen {
+    background: radial-gradient(circle at center, var(--dream-purple), var(--primary-color));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: dreamPulse 3s ease-in-out infinite;
+}
+
+@keyframes dreamPulse {
+    0%, 100% { background: radial-gradient(circle at center, var(--dream-purple), var(--primary-color)); }
+    50% { background: radial-gradient(circle at center, var(--dream-blue), var(--secondary-color)); }
+}
+
+.loading-content {
+    text-align: center;
+    max-width: 400px;
+}
+
+.game-title {
+    font-family: var(--font-title);
+    font-size: 4rem;
+    font-weight: 300;
+    letter-spacing: 0.2em;
+    margin-bottom: 2rem;
+    text-shadow: 0 0 20px var(--accent-color);
+    animation: titleGlow 2s ease-in-out infinite alternate;
+}
+
+@keyframes titleGlow {
+    from { text-shadow: 0 0 20px var(--accent-color); }
+    to { text-shadow: 0 0 30px var(--accent-color), 0 0 40px var(--dream-pink); }
+}
+
+.loading-bar {
+    width: 100%;
+    height: 4px;
+    background: var(--glass-bg);
+    border-radius: 2px;
+    overflow: hidden;
+    margin-bottom: 1rem;
+}
+
+.loading-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent-color), var(--dream-pink));
+    width: 0%;
+    transition: width 0.3s ease;
+    animation: loadingShimmer 2s ease-in-out infinite;
+}
+
+@keyframes loadingShimmer {
+    0%, 100% { background: linear-gradient(90deg, var(--accent-color), var(--dream-pink)); }
+    50% { background: linear-gradient(90deg, var(--dream-blue), var(--accent-color)); }
+}
+
+.loading-text {
+    font-size: 1rem;
+    opacity: 0.8;
+    animation: fadeInOut 2s ease-in-out infinite;
+}
+
+@keyframes fadeInOut {
+    0%, 100% { opacity: 0.8; }
+    50% { opacity: 0.4; }
+}
+
+/* Main Menu */
+#main-menu {
+    background: linear-gradient(45deg, var(--primary-color), var(--dream-purple));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+}
+
+.menu-background {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="20" cy="20" r="2" fill="rgba(255,255,255,0.1)"/><circle cx="80" cy="40" r="1.5" fill="rgba(212,175,55,0.2)"/><circle cx="60" cy="80" r="1" fill="rgba(238,90,111,0.15)"/></svg>');
+    animation: starfield 20s linear infinite;
+}
+
+@keyframes starfield {
+    from { transform: translateY(0); }
+    to { transform: translateY(-100px); }
+}
+
+.menu-content {
+    text-align: center;
+    z-index: 10;
+    position: relative;
+}
+
+.game-subtitle {
+    font-size: 1.2rem;
+    opacity: 0.7;
+    margin-bottom: 3rem;
+    font-style: italic;
+}
+
+.menu-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    align-items: center;
+}
+
+.menu-btn {
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    color: var(--text-light);
+    padding: 1rem 2rem;
+    font-family: var(--font-body);
+    font-size: 1rem;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    backdrop-filter: blur(10px);
+    min-width: 200px;
+}
+
+.menu-btn:hover:not(:disabled) {
+    background: var(--glass-border);
+    box-shadow: 0 0 20px var(--accent-color);
+    transform: translateY(-2px);
+}
+
+.menu-btn.primary {
+    background: var(--accent-color);
+    color: var(--text-dark);
+    font-weight: 600;
+}
+
+.menu-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* Game Canvas */
+#game-canvas {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 1;
+}
+
+/* HUD */
+.hud {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 100;
+    pointer-events: none;
+}
+
+.hud-top {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    right: 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+}
+
+.fragment-counter {
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    border-radius: 20px;
+    padding: 10px 20px;
+    backdrop-filter: blur(10px);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 1.2rem;
+}
+
+.fragment-icon {
+    color: var(--accent-color);
+    font-size: 1.5rem;
+    animation: fragmentGlow 2s ease-in-out infinite;
+}
+
+@keyframes fragmentGlow {
+    0%, 100% { color: var(--accent-color); }
+    50% { color: var(--dream-pink); }
+}
+
+.dreamer-info {
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    border-radius: 15px;
+    padding: 15px;
+    backdrop-filter: blur(10px);
+    text-align: right;
+}
+
+.dream-stability {
+    margin-top: 8px;
+}
+
+.stability-bar {
+    width: 120px;
+    height: 6px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 3px;
+    overflow: hidden;
+}
+
+.stability-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--dream-pink), var(--accent-color));
+    transition: width 0.5s ease;
+}
+
+.hud-center {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+
+.interaction-prompt {
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    border-radius: 25px;
+    padding: 15px 25px;
+    backdrop-filter: blur(10px);
+    pointer-events: auto;
+    animation: promptPulse 1.5s ease-in-out infinite;
+}
+
+@keyframes promptPulse {
+    0%, 100% { transform: scale(1); opacity: 0.9; }
+    50% { transform: scale(1.05); opacity: 1; }
+}
+
+.hud-bottom {
+    position: absolute;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+}
+
+.fragment-preview {
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    border-radius: 15px;
+    padding: 20px;
+    backdrop-filter: blur(15px);
+    max-width: 400px;
+    text-align: center;
+    animation: slideUp 0.3s ease-out;
+}
+
+@keyframes slideUp {
+    from { transform: translateX(-50%) translateY(100%); opacity: 0; }
+    to { transform: translateX(-50%) translateY(0); opacity: 1; }
+}
+
+/* Journal */
+.journal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.8);
+    z-index: 200;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: auto;
+}
+
+.journal-content {
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    border-radius: 20px;
+    backdrop-filter: blur(20px);
+    width: 90%;
+    max-width: 800px;
+    height: 80%;
+    display: flex;
+    flex-direction: column;
+    animation: modalAppear 0.3s ease-out;
+}
+
+@keyframes modalAppear {
+    from { transform: scale(0.8); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+}
+
+.journal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px;
+    border-bottom: 1px solid var(--glass-border);
+}
+
+.journal-header h2 {
+    font-family: var(--font-title);
+    font-size: 2rem;
+    color: var(--accent-color);
+}
+
+.close-btn {
+    background: none;
+    border: none;
+    color: var(--text-light);
+    font-size: 2rem;
+    cursor: pointer;
+    transition: color 0.3s ease;
+}
+
+.close-btn:hover {
+    color: var(--dream-pink);
+}
+
+.journal-tabs {
+    display: flex;
+    padding: 0 20px;
+    border-bottom: 1px solid var(--glass-border);
+}
+
+.tab-btn {
+    background: none;
+    border: none;
+    color: var(--text-light);
+    padding: 15px 20px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    border-bottom: 2px solid transparent;
+    font-family: var(--font-body);
+}
+
+.tab-btn.active {
+    color: var(--accent-color);
+    border-bottom-color: var(--accent-color);
+}
+
+.tab-btn:hover:not(.active) {
+    color: var(--dream-blue);
+}
+
+.journal-body {
+    flex: 1;
+    padding: 20px;
+    overflow-y: auto;
+}
+
+.tab-content {
+    display: none;
+}
+
+.tab-content.active {
+    display: block;
+}
+
+.fragment-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 15px;
+}
+
+.fragment-item {
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    border-radius: 10px;
+    padding: 15px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.fragment-item:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 20px var(--shadow-color);
+}
+
+/* Narrative Modal */
+.modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.9);
+    z-index: 300;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: auto;
+}
+
+.modal-content {
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    border-radius: 20px;
+    backdrop-filter: blur(20px);
+    max-width: 600px;
+    padding: 30px;
+    text-align: center;
+    animation: modalAppear 0.5s ease-out;
+}
+
+.narrative-text {
+    font-size: 1.2rem;
+    line-height: 1.6;
+    margin-bottom: 30px;
+    color: var(--text-light);
+}
+
+.narrative-choices {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.choice-btn {
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    color: var(--text-light);
+    padding: 15px 20px;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-family: var(--font-body);
+}
+
+.choice-btn:hover {
+    background: var(--glass-border);
+    transform: translateY(-2px);
+}
+
+/* Controls Help */
+.controls-help {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    border-radius: 15px;
+    backdrop-filter: blur(15px);
+    padding: 20px;
+    z-index: 150;
+    pointer-events: auto;
+}
+
+.controls-content h3 {
+    color: var(--accent-color);
+    margin-bottom: 15px;
+    font-family: var(--font-title);
+}
+
+.control-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+    min-width: 200px;
+}
+
+.key {
+    background: var(--glass-border);
+    padding: 5px 10px;
+    border-radius: 5px;
+    font-weight: bold;
+    color: var(--accent-color);
+}
+
+.description {
+    opacity: 0.8;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .game-title {
+        font-size: 2.5rem;
+    }
+    
+    .journal-content {
+        width: 95%;
+        height: 90%;
+    }
+    
+    .hud-top {
+        flex-direction: column;
+        gap: 10px;
+    }
+    
+    .controls-help {
+        bottom: 10px;
+        right: 10px;
+        font-size: 0.9rem;
+    }
+    
+    .fragment-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Animations for dream-like effects */
+@keyframes float {
+    0%, 100% { transform: translateY(0px); }
+    50% { transform: translateY(-10px); }
+}
+
+@keyframes shimmer {
+    0% { background-position: -200% 0; }
+    100% { background-position: 200% 0; }
+}
+
+.floating { animation: float 3s ease-in-out infinite; }
+
+/* Special effects for fragments */
+.fragment-glow {
+    position: relative;
+    overflow: hidden;
+}
+
+.fragment-glow::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+    animation: shimmer 2s infinite;
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+    width: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: var(--glass-bg);
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--accent-color);
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: var(--dream-blue);
+}
+
+/* Additional Journal Styles */
+.dreamer-profile {
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    border-radius: 10px;
+    padding: 15px;
+    margin-bottom: 15px;
+    transition: all 0.3s ease;
+}
+
+.dreamer-profile:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px var(--shadow-color);
+}
+
+.dreamer-details {
+    color: var(--accent-color);
+    font-size: 0.9rem;
+    margin: 5px 0;
+}
+
+.dreamer-backstory {
+    font-style: italic;
+    opacity: 0.8;
+    margin: 10px 0;
+}
+
+.memory-count {
+    color: var(--dream-blue);
+    font-weight: bold;
+    margin-top: 10px;
+}
+
+.realm-stats {
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    border-radius: 10px;
+    padding: 20px;
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+.realm-stats h4 {
+    color: var(--accent-color);
+    margin-bottom: 15px;
+    font-family: var(--font-title);
+}
+
+.realm-structures {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 15px;
+}
+
+.structure-item {
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    border-radius: 8px;
+    padding: 12px;
+    text-align: center;
+}
+
+.structure-item h5 {
+    color: var(--dream-pink);
+    margin-bottom: 8px;
+    font-size: 0.9rem;
+}
+
+.fragment-type {
+    color: var(--dream-blue);
+    font-weight: bold;
+    text-transform: uppercase;
+    font-size: 0.8rem;
+}
+
+.fragment-meta {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 10px;
+    font-size: 0.8rem;
+    opacity: 0.7;
+}
+
+.fragment-dreamer {
+    color: var(--dream-purple);
+}
+
+.fragment-power {
+    color: var(--accent-color);
+    font-weight: bold;
+}
+
+/* Dreamer Selection Cards */
+.custom-content {
+    margin-top: 20px;
+}
+
+.dreamer-card {
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    border-radius: 15px;
+    padding: 20px;
+    margin: 15px 0;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.dreamer-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 25px var(--shadow-color);
+    border-color: var(--accent-color);
+}
+
+.dreamer-card h3 {
+    color: var(--accent-color);
+    margin-bottom: 10px;
+    font-family: var(--font-title);
+}
+
+.dreamer-age {
+    color: var(--text-light);
+    opacity: 0.8;
+    margin: 5px 0;
+}
+
+.dreamer-personality {
+    color: var(--dream-blue);
+    font-weight: bold;
+    margin: 8px 0;
+}
+
+/* Identity Revelation Styling */
+.identity-revelation {
+    background: linear-gradient(45deg, var(--dream-purple), var(--dream-pink));
+    padding: 20px;
+    border-radius: 10px;
+    margin: 20px 0;
+    font-style: italic;
+    font-size: 1.1rem;
+    text-align: center;
+    border: 2px solid var(--accent-color);
+}
+
+/* Ending Stats */
+.ending-stats {
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    border-radius: 10px;
+    padding: 20px;
+    margin: 20px 0;
+    text-align: center;
+}
+
+.ending-stats p {
+    margin: 8px 0;
+    font-size: 1.1rem;
+}
+
+/* Special effects for enhanced immersion */
+.fragment-item.collected {
+    opacity: 0.5;
+    transform: scale(0.95);
+}
+
+.realm-stats.evolving {
+    animation: realmPulse 3s ease-in-out infinite;
+}
+
+@keyframes realmPulse {
+    0%, 100% { border-color: var(--glass-border); }
+    50% { border-color: var(--accent-color); }
+}
