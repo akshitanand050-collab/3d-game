@@ -3,33 +3,165 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>3D Car Racing Game</title>
-    <link rel="stylesheet" href="style.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <title>Dream Dealer</title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@300;400;600&family=Fira+Code:wght@300;400&display=swap');
+    </style>
 </head>
 <body>
-    <div id="gameContainer">
-        <div id="ui">
-            <div id="hud">
-                <div id="timer">Time: 00:00</div>
-                <div id="lapCounter">Lap: 1/3</div>
-                <div id="speed">Speed: 0 mph</div>
+    <!-- Loading Screen -->
+    <div id="loading-screen" class="screen active">
+        <div class="loading-content">
+            <h1 class="game-title">DREAM DEALER</h1>
+            <div class="loading-bar">
+                <div class="loading-fill"></div>
             </div>
-            <div id="startScreen" class="screen">
-                <h1>3D Car Racing</h1>
-                <p>Use WASD or Arrow Keys to drive</p>
-                <p>Press SPACE for brake</p>
-                <button id="startButton">Start Race</button>
-            </div>
-            <div id="gameOverScreen" class="screen hidden">
-                <h1>Race Complete!</h1>
-                <div id="finalTime"></div>
-                <button id="restartButton">Race Again</button>
+            <p class="loading-text">Entering the realm of dreams...</p>
+        </div>
+    </div>
+
+    <!-- Main Menu -->
+    <div id="main-menu" class="screen">
+        <div class="menu-background"></div>
+        <div class="menu-content">
+            <h1 class="game-title">DREAM DEALER</h1>
+            <p class="game-subtitle">A journey through the landscapes of the unconscious</p>
+            <div class="menu-buttons">
+                <button id="start-game" class="menu-btn primary">Enter Dreams</button>
+                <button id="continue-game" class="menu-btn" disabled>Continue Journey</button>
+                <button id="settings" class="menu-btn">Settings</button>
+                <button id="about" class="menu-btn">About</button>
             </div>
         </div>
-        <canvas id="gameCanvas"></canvas>
     </div>
-    
-    <script src="game.js"></script>
+
+    <!-- Game HUD -->
+    <div id="game-hud" class="hud hidden">
+        <div class="hud-top">
+            <div class="fragment-counter">
+                <span class="fragment-icon">✧</span>
+                <span id="fragment-count">0</span>
+            </div>
+            <div class="dream-indicator">
+                <div class="dreamer-info">
+                    <span id="dreamer-name">Unknown Dreamer</span>
+                    <div class="dream-stability">
+                        <div class="stability-bar">
+                            <div id="stability-fill" class="stability-fill"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="hud-center">
+            <div id="interaction-prompt" class="interaction-prompt hidden">
+                <span class="prompt-text">Press E to extract fragment</span>
+            </div>
+        </div>
+
+        <div class="hud-bottom">
+            <div class="fragment-preview hidden" id="fragment-preview">
+                <div class="fragment-content">
+                    <h3 id="fragment-title">Memory Fragment</h3>
+                    <p id="fragment-description">A piece of someone's inner world...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Inventory/Journal -->
+    <div id="journal" class="journal hidden">
+        <div class="journal-content">
+            <div class="journal-header">
+                <h2>Dream Journal</h2>
+                <button id="close-journal" class="close-btn">×</button>
+            </div>
+            <div class="journal-tabs">
+                <button class="tab-btn active" data-tab="fragments">Fragments</button>
+                <button class="tab-btn" data-tab="dreamers">Dreamers</button>
+                <button class="tab-btn" data-tab="realm">My Realm</button>
+            </div>
+            <div class="journal-body">
+                <div id="fragments-tab" class="tab-content active">
+                    <div class="fragment-grid" id="fragment-grid">
+                        <!-- Fragments will be populated here -->
+                    </div>
+                </div>
+                <div id="dreamers-tab" class="tab-content">
+                    <div class="dreamer-list" id="dreamer-list">
+                        <!-- Dreamer profiles will be populated here -->
+                    </div>
+                </div>
+                <div id="realm-tab" class="tab-content">
+                    <div class="realm-builder" id="realm-builder">
+                        <p>Your personal dream realm awaits construction...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Narrative Modal -->
+    <div id="narrative-modal" class="modal hidden">
+        <div class="modal-content">
+            <div class="narrative-text" id="narrative-text">
+                <!-- Narrative content will be inserted here -->
+            </div>
+            <div class="narrative-choices" id="narrative-choices">
+                <!-- Choice buttons will be inserted here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Game Canvas -->
+    <canvas id="game-canvas"></canvas>
+
+    <!-- Controls Help -->
+    <div id="controls-help" class="controls-help hidden">
+        <div class="controls-content">
+            <h3>Controls</h3>
+            <div class="control-item">
+                <span class="key">WASD</span>
+                <span class="description">Move</span>
+            </div>
+            <div class="control-item">
+                <span class="key">Mouse</span>
+                <span class="description">Look around</span>
+            </div>
+            <div class="control-item">
+                <span class="key">E</span>
+                <span class="description">Interact / Extract fragment</span>
+            </div>
+            <div class="control-item">
+                <span class="key">J</span>
+                <span class="description">Open journal</span>
+            </div>
+            <div class="control-item">
+                <span class="key">ESC</span>
+                <span class="description">Pause / Menu</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/PointerLockControls.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/simplex-noise/2.4.0/simplex-noise.min.js"></script>
+    <script src="js/engine/Engine.js"></script>
+    <script src="js/engine/SceneManager.js"></script>
+    <script src="js/generation/ProceduralGenerator.js"></script>
+    <script src="js/generation/DreamArchitect.js"></script>
+    <script src="js/fragments/FragmentSystem.js"></script>
+    <script src="js/fragments/MemoryFragment.js"></script>
+    <script src="js/narrative/NarrativeEngine.js"></script>
+    <script src="js/narrative/DialogueSystem.js"></script>
+    <script src="js/audio/AudioManager.js"></script>
+    <script src="js/visual/EffectsManager.js"></script>
+    <script src="js/ui/UIManager.js"></script>
+    <script src="js/player/Player.js"></script>
+    <script src="js/game/GameState.js"></script>
+    <script src="js/main.js"></script>
 </body>
 </html>
